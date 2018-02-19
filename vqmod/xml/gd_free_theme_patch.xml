@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<id>OpenCart gd-free theme</id>
+	<version>1.0</version>
+	<vqmver>2.5.0</vqmver>
+	<author>support@opencart.cn</author>
+
+	<!--将 owl-caarousel 升级到 owl-carousel 2.0-->
+	<file name="catalog/controller/module/*.php">
+		<operation error="skip">
+			<search position="replace"><![CDATA[$this->document->addStyle('catalog/view/javascript/jquery/owl-carousel/owl.carousel.css');]]></search>
+			<add><![CDATA[
+				if($this->config->get('config_template') == 'gd-free') {
+					$this->document->addStyle('catalog/view/theme/' . $this->config->get('config_template') . '/javascript/owl-carousel2/owl.carousel.css');
+				} else {
+					$this->document->addStyle('catalog/view/javascript/jquery/owl-carousel/owl.carousel.css');
+				}
+			]]></add>
+		</operation>
+
+		<operation error="skip">
+			<search position="replace"><![CDATA[$this->document->addScript('catalog/view/javascript/jquery/owl-carousel/owl.carousel.min.js');]]></search>
+			<add><![CDATA[
+				if($this->config->get('config_template') == 'gd-free') {
+					$this->document->addScript('catalog/view/theme/' . $this->config->get('config_template') . '/javascript/owl-carousel2/owl.carousel.min.js');
+				} else {
+					$this->document->addScript('catalog/view/javascript/jquery/owl-carousel/owl.carousel.min.js');
+				}
+			]]></add>
+		</operation>
+	</file>
+
+	<!--footer 显示地址电话-->
+	<file name="catalog/controller/common/footer.php">
+		<operation error="skip">
+			<search position="after"><![CDATA[$this->load->language('common/footer');]]></search>
+			<add><![CDATA[
+				$this->load->language('information/contact');
+				$data['text_contact'] = $this->language->get('heading_title');
+				$data['address'] = nl2br($this->config->get('config_address'));
+				$data['telephone'] = $this->config->get('config_telephone');
+				$data['email'] = $this->config->get('config_email');
+			]]></add>
+		</operation>
+	</file>
+
+	<!--category.php 子分类添加图片-->
+	<file name="catalog/controller/product/category.php">
+		<operation error="skip">
+			<search position="replace"><![CDATA[$data['categories'][] = array(]]></search>
+			<add><![CDATA[
+				if ($result['image']) {
+					$image = $this->model_tool_image->resize($result['image'], 200, 200);
+				} else {
+					$image = $this->model_tool_image->resize('placeholder.png', 200, 200);
+				}
+
+				$data['categories'][] = array(
+					'image' => $image,
+			]]></add>
+		</operation>
+	</file>
+
+	<!--添加 js -->
+	<file name="catalog/controller/product/*.php">
+		<operation error="skip">
+			<search position="after"><![CDATA[$this->document->addStyle('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.css');]]></search>
+			<add><![CDATA[
+				if($this->config->get('config_template') == 'gd-free') {
+					$this->document->addScript('catalog/view/theme/' . $this->config->get('config_template') . '/javascript/jquery.elevateZoom.min.js');
+					$this->document->addScript('catalog/view/theme/' . $this->config->get('config_template') . '/javascript/fancybox/jquery.fancybox.pack.js');
+					$this->document->addStyle('catalog/view/theme/' . $this->config->get('config_template') . '/javascript/fancybox/jquery.fancybox.css');
+				}
+			]]></add>
+		</operation>
+
+		<!--实时刷新价格-->
+		<operation error="skip">
+			<ignoreif><![CDATA[public function price() {]]></ignoreif>
+			<search position="before"><![CDATA[public function getRecurringDescription()]]></search>
+			<add><![CDATA[
+				public function price() {
+					$json = array();
+
+					if (isset($this->request->post['product_id'])) {
+						$product_id = (int)$this->request->post['product_id'];
+					} else {
+						$product_id = 0;
+					}
+
+					if (!$product_id) {
+						return;
+					}
+
+					$this->load->model('catalog/product');
+					$product_info = $this->model_catalog_product->getProduct($product_id);
+
+					if ($product_info) {
+						$price = $product_info['price'];
+						$special = $product_info['special'];
+
+						if (isset($this->request->post['quantity']) && ((int)$this->request->post['quantity'] >= $product_info['minimum'])) {
+							$quantity = (int)$this->request->post['quantity'];
+						} else {
+							$quantity = $product_info['minimum'] ? $product_info['minimum'] : 1;
+						}
+
+						$option_price = 0;
+						if (isset($this->request->post['option'])) {
+							$option = array_filter($this->request->post['option']);
+
+							if ($option) {
+								$product_options = $this->model_catalog_product->getProductOptions($this->request->post['product_id']);
+								foreach ($product_options as $product_option) {
+									if ($product_option['type'] == 'radio' || $product_option['type'] == 'select' && !empty($option[$product_option['product_option_id']])) {
+										foreach ($product_option['product_option_value'] as $product_option_value) {
+											if (isset($option[$product_option['product_option_id']]) && $product_option_value['product_option_value_id'] == $option[$product_option['product_option_id']]) {
+												if ($product_option_value['price_prefix'] == '+') {
+													$option_price += $product_option_value['price'];
+												} elseif ($product_option_value['price_prefix'] == '-') {
+													$option_price -= $product_option_value['price'];
+												}
+											}
+										}
+									}
+
+									if ($product_option['type'] == 'checkbox' && !empty($option[$product_option['product_option_id']])) {
+										foreach ($product_option['product_option_value'] as $product_option_value) {
+											if (in_array($product_option_value['product_option_value_id'], $option[$product_option['product_option_id']])) {
+												if ($product_option_value['price_prefix'] == '+') {
+													$option_price += $product_option_value['price'];
+												} elseif ($product_option_value['price_prefix'] == '-') {
+													$option_price -= $product_option_value['price'];
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+
+						// Product Discounts
+						$product_discount_query = $this->db->query("SELECT price FROM " . DB_PREFIX . "product_discount WHERE product_id = '" . (int)$product_id . "' AND customer_group_id = '" . (int)$this->config->get('config_customer_group_id') . "' AND quantity <= '" . (int)$quantity . "' AND ((date_start = '0000-00-00' OR date_start < NOW()) AND (date_end = '0000-00-00' OR date_end > NOW())) ORDER BY quantity DESC, priority ASC, price ASC LIMIT 1");
+
+						if ($product_discount_query->num_rows) {
+							$special = $product_discount_query->row['price'];
+						}
+
+						$this->load->language('product/product');
+
+						$json['price'] = $this->currency->format($this->tax->calculate(($price + $option_price) * $quantity, $product_info['tax_class_id'], $this->config->get('config_tax')));
+
+						if ($special) {
+							$json['special'] = $this->currency->format($this->tax->calculate(($special + $option_price) * $quantity, $product_info['tax_class_id'], $this->config->get('config_tax')));
+						}
+
+						if ($this->config->get('config_tax')) {
+							$json['tax'] = $this->language->get('text_tax') . ' ' . $this->currency->format((float)($special ? ($special + $option_price) * $quantity : ($price + $option_price) * $quantity));
+						}
+					}
+
+					$this->response->addHeader('Content-Type: application/json');
+					$this->response->setOutput(json_encode($json));
+				}
+			]]></add>
+		</operation>
+	</file>
+</modification>

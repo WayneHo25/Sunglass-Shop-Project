@@ -1,0 +1,16 @@
+/node_modules
+/image/cache/catalog
+/_upload
+/vqmod/vqcache
+/vqmod/mods.cache
+/vqmod/checked.cache
+/vqmod/logs
+/config.php
+/admin/config.php
+/image/catalog/.tmb
+/image/catalog/.quarantine
+/system/storage/logs/*
+/system/storage/cache/*
+!/system/storage/logs/index.html
+!/system/storage/cache/index.html
+/.sass-cache
