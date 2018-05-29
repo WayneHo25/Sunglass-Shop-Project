@@ -1,6 +1,6 @@
 # Sunglass-Shop-Project
 
-## Website URL: http://120.78.202.90/ (Invalid now)
+## Website URL: http://120.78.202.90/ 
 
 ## Decription
 A e-commerce project powered by Opencart
