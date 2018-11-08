@@ -3,7 +3,7 @@
 ## http://120.78.202.90/ (Invaild now)
 
 ## Decription
-A e-commerce project powered by Opencart
+A e-commerce website project powered by Opencart
 
 OpenCart is a free open source ecommerce platform for online merchants. OpenCart provides a professional and reliable foundation from which to build a successful online store.
 
